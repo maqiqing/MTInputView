@@ -35,6 +35,7 @@
     [inputView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.equalTo(self.view);
         make.height.mas_equalTo(totalHeight);
+        // 约束绑定
         inputView.bottomConstraint = make.bottom.equalTo(self.view.mas_bottom);
     }];
 }

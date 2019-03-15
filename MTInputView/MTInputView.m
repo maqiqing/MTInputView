@@ -16,11 +16,16 @@
 // 适配iPhone X Tabbar距离底部的距离
 #define MT_TabbarSafeBottomMargin (iPhoneX ? 34.f : 0.f)
 
-
+/*
+ textViewEdgeInsetPadding: textview和contentView的edgeInset边缘距离 (黑色一圈)
+ contentViewTopPadding: contentView距离顶部距离
+ contentViewBottomPadding: contentView距离safaAreaBottom距离
+ textContentInsetMargin: textView 里文字
+ */
 #define textViewEdgeInsetPadding 4
 #define contentViewTopPadding 7
 #define contentViewBottomPadding 5
-#define textContainerInsetMargin 6
+#define textContentInsetMargin 6
 
 @interface MTInputView()
 
@@ -55,11 +60,11 @@
     _textView.backgroundColor = [UIColor orangeColor];
     _textView.font = [UIFont systemFontOfSize:17];//lineHeight = 20(近似)
     [_contentView addSubview:_textView];
-    // 使用textContainerInset设置top、left、right
+    // 默认textView文字里有个上下8的距离，去掉
     _textView.textContainerInset = UIEdgeInsetsZero;
-    //当光标在最后一行时，始终显示低边距，需使用contentInset设置bottom.
-    _textView.contentInset = UIEdgeInsetsMake(textContainerInsetMargin, 0, textContainerInsetMargin, 0);
-    //防止在拼音打字时抖动
+    // 默认为 0，设置默认正文有个上下6的距离
+    _textView.contentInset = UIEdgeInsetsMake(textContentInsetMargin, 0, textContentInsetMargin, 0);
+    // 防止中文输入文字抖动？
     _textView.layoutManager.allowsNonContiguousLayout = NO;
     
     _recordVoiceButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -120,6 +125,7 @@
         self.bottomConstraint.offset(0);
     }
     [UIView animateWithDuration:duration animations:^{
+        // 这里要用 self.superview，是父试图更新
         [self.superview layoutIfNeeded];
     }];
 }
@@ -132,7 +138,7 @@
     NSInteger height = ceilf([_textView sizeThatFits:CGSizeMake(_textView.bounds.size.width, MAXFLOAT)].height);
     
     // 至多5行
-    CGFloat maxTextHeight = ceilf(_textView.font.lineHeight * 5 + 2*textContainerInsetMargin);//font:17  lineHight=20.287109
+    CGFloat maxTextHeight = ceilf(_textView.font.lineHeight * 5 + 2*textContentInsetMargin);//font:17  lineHight=20.287109
     
     NSLog(@"height:%ld-----textheight:%ld------max:%f",height,(long)self.textHeight,maxTextHeight);
     
@@ -143,11 +149,14 @@
         _textView.scrollEnabled = !autoChangeHeight;
         if ( autoChangeHeight ) {
             [self mas_updateConstraints:^(MASConstraintMaker *make) {
-                make.height.mas_equalTo(self.textHeight + MT_TabbarSafeBottomMargin + contentViewTopPadding + contentViewBottomPadding + textContainerInsetMargin*2 + textViewEdgeInsetPadding*2);
+                // textview文本高度 + safaArea底部高度 + 容器试图距离顶部/底部 + 文字在uitextview里的上下约束 + textview距离容器的上下高度
+                make.height.mas_equalTo(self.textHeight + MT_TabbarSafeBottomMargin + contentViewTopPadding + contentViewBottomPadding + textContentInsetMargin*2 + textViewEdgeInsetPadding*2);
             }];
         }
         [self layoutIfNeeded];
     }
+    // 粘贴情况
+    // 全选删除情况
 }
 
 - (void)dealloc {
