@@ -27,17 +27,17 @@
     // Do any additional setup after loading the view, typically from a nib.
     self.view.backgroundColor = [UIColor darkGrayColor];
         
-    CGFloat inputViewHeight = 52;
-    CGFloat totalHeight = inputViewHeight + MT_TabbarSafeBottomMargin;
+    CGFloat inputViewHeight = 48;// 8+5(contentView距离上下） + 8+8(textview距离contentView上下) + 19(lineHeight)
     MTInputView *inputView = [[MTInputView alloc]init];
     [self.view addSubview:inputView];
     
     [inputView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.equalTo(self.view);
-        make.height.mas_equalTo(totalHeight);
+        make.height.mas_equalTo(inputViewHeight);
         // 约束绑定
-        inputView.bottomConstraint = make.bottom.equalTo(self.view.mas_bottom);
+        inputView.bottomConstraint = make.bottom.equalTo(self.mas_bottomLayoutGuideTop);
     }];
+    
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {

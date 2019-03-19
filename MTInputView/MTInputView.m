@@ -7,25 +7,6 @@
 //
 
 #import "MTInputView.h"
-//#import "MTTextView.h"
-//屏幕宽高
-#define kScreenW [UIScreen mainScreen].bounds.size.width
-#define kScreenH [UIScreen mainScreen].bounds.size.height
-// 刘海屏 宏定义
-#define iPhoneX ((kScreenH == 812.f || kScreenH == 896.f) ? YES : NO)
-// 适配iPhone X Tabbar距离底部的距离
-#define MT_TabbarSafeBottomMargin (iPhoneX ? 34.f : 0.f)
-
-/*
- textViewEdgeInsetPadding: textview和contentView的edgeInset边缘距离 (黑色一圈)
- contentViewTopPadding: contentView距离顶部距离
- contentViewBottomPadding: contentView距离safaAreaBottom距离
- textContentInsetMargin: textView 里文字
- */
-#define textViewEdgeInsetPadding 4
-#define contentViewTopPadding 7
-#define contentViewBottomPadding 5
-#define textContentInsetMargin 6
 
 @interface MTInputView()
 
@@ -53,19 +34,15 @@
 // UI
 - (void)setupUI {
     _contentView = [[UIView alloc]init];
-    _contentView.backgroundColor = [UIColor blackColor];
+    _contentView.backgroundColor = [UIColor whiteColor];
     _contentView.layer.cornerRadius = 5;
     [self addSubview:_contentView];
     _textView = [[UITextView alloc]init];
-    _textView.backgroundColor = [UIColor orangeColor];
-    _textView.font = [UIFont systemFontOfSize:17];//lineHeight = 20(近似)
+    _textView.backgroundColor = [UIColor whiteColor];
+    _textView.font = [UIFont systemFontOfSize:16];//lineHeight = 19(近似)
     [_contentView addSubview:_textView];
-    // 默认textView文字里有个上下8的距离，去掉
+    // 默认textView文字里有个默认上下8的距离，去掉
     _textView.textContainerInset = UIEdgeInsetsZero;
-    // 默认为 0，设置默认正文有个上下6的距离
-    _textView.contentInset = UIEdgeInsetsMake(textContentInsetMargin, 0, textContentInsetMargin, 0);
-    // 防止中文输入文字抖动？
-    _textView.layoutManager.allowsNonContiguousLayout = NO;
     
     _recordVoiceButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [_recordVoiceButton setImage:[UIImage imageNamed:@"play-circle"] forState:UIControlStateNormal];
@@ -81,29 +58,31 @@
 // 添加约束
 - (void)setupConstraints {
     [_contentView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(self).offset(contentViewTopPadding);
+        make.top.equalTo(self).offset(8);
         make.left.mas_equalTo(self.recordVoiceButton.mas_right).offset(5);
         make.right.mas_equalTo(self.emojiButton.mas_left).offset(-5);
-        make.bottom.equalTo(self).offset( -MT_TabbarSafeBottomMargin - contentViewBottomPadding);
+        make.bottom.equalTo(self).offset( - 5);
     }];
     [_textView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.edges.equalTo(self.contentView).insets(UIEdgeInsetsMake(textViewEdgeInsetPadding, textViewEdgeInsetPadding, textViewEdgeInsetPadding, textViewEdgeInsetPadding));
+        make.edges.equalTo(self.contentView).insets(UIEdgeInsetsMake(8, 5, 8, 5));
     }];
     
+    
+    // 初试高度48
     [_recordVoiceButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.equalTo(self).offset(7);
         make.bottom.equalTo(self.contentView);
-        make.size.mas_equalTo(CGSizeMake(40, 40));
+        make.size.mas_equalTo(CGSizeMake(36, 36));
     }];
     [_moreFuncButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.equalTo(self).offset(-15);
         make.bottom.equalTo(self.contentView);
-        make.size.mas_equalTo(CGSizeMake(40, 40));
+        make.size.mas_equalTo(CGSizeMake(36, 36));
     }];
     [_emojiButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.equalTo(self.moreFuncButton.mas_left).offset(-5);
         make.bottom.equalTo(self.contentView);
-        make.size.mas_equalTo(CGSizeMake(40, 40));
+        make.size.mas_equalTo(CGSizeMake(36, 36));
     }];
 }
 
@@ -119,8 +98,10 @@
     CGRect keyboardFrame = [[notifi.userInfo valueForKey:@"UIKeyboardFrameEndUserInfoKey"] CGRectValue];
     CGFloat duration = [[notifi.userInfo valueForKey:@"UIKeyboardAnimationDurationUserInfoKey"] floatValue];
     
+    CGFloat safeAreaBottom = self.superview.safeAreaInsets.bottom;
+    
     if ([notifi.name isEqualToString:UIKeyboardWillShowNotification]) {
-        self.bottomConstraint.offset(-keyboardFrame.size.height + MT_TabbarSafeBottomMargin);
+        self.bottomConstraint.offset( -keyboardFrame.size.height + safeAreaBottom );
     } else if ([notifi.name isEqualToString:UIKeyboardWillHideNotification]) {
         self.bottomConstraint.offset(0);
     }
@@ -138,30 +119,37 @@
     NSInteger height = ceilf([_textView sizeThatFits:CGSizeMake(_textView.bounds.size.width, MAXFLOAT)].height);
     
     // 至多5行
-    CGFloat maxTextHeight = ceilf(_textView.font.lineHeight * 5 + 2*textContentInsetMargin);//font:17  lineHight=20.287109
+    CGFloat maxTextHeight = ceilf(_textView.font.lineHeight * 5);//font:16  lineHight 约= 19
     
-    NSLog(@"height:%ld-----textheight:%ld------max:%f",height,(long)self.textHeight,maxTextHeight);
     
     // 高度不一样，行数改变了
     if (self.textHeight != height) {
-        self.textHeight = height;
+        // 高度小于最大高度
         BOOL autoChangeHeight = height <= maxTextHeight;
         _textView.scrollEnabled = !autoChangeHeight;
-        if ( autoChangeHeight ) {
+
+        
+        NSLog(@"height:%ld-----textheight:%ld------max:%f",height,(long)self.textHeight,maxTextHeight);
+
+        // 粘贴文字高度大于最高高度
+        if (height - self.textHeight > maxTextHeight) {
             [self mas_updateConstraints:^(MASConstraintMaker *make) {
                 // textview文本高度 + safaArea底部高度 + 容器试图距离顶部/底部 + 文字在uitextview里的上下约束 + textview距离容器的上下高度
-                make.height.mas_equalTo(self.textHeight + MT_TabbarSafeBottomMargin + contentViewTopPadding + contentViewBottomPadding + textContentInsetMargin*2 + textViewEdgeInsetPadding*2);
+                make.height.mas_equalTo(maxTextHeight + 8+5+8+8);
             }];
+        } else {
+            if ( autoChangeHeight ) {
+                [self mas_updateConstraints:^(MASConstraintMaker *make) {
+                    // textview文本高度 + safaArea底部高度 + 容器试图距离顶部/底部 + 文字在uitextview里的上下约束 + textview距离容器的上下高度
+                    make.height.mas_equalTo(height + 8+5+8+8);
+                }];
+            }
         }
+        self.textHeight = height;
         [self layoutIfNeeded];
     }
     // 粘贴情况
     // 全选删除情况
-}
-
-- (void)dealloc {
-    NSLog(@"%s", __func__);
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 @end
