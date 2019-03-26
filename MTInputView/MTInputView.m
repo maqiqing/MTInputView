@@ -112,15 +112,10 @@
 }
 
 - (void)textDidChange {
-    /*
-     ceilf 进1 函数
-     */
-    
+    // ceilf 进1 函数
     NSInteger height = ceilf([_textView sizeThatFits:CGSizeMake(_textView.bounds.size.width, MAXFLOAT)].height);
-    
     // 至多5行
     CGFloat maxTextHeight = ceilf(_textView.font.lineHeight * 5);//font:16  lineHight 约= 19
-    
     
     // 高度不一样，行数改变了
     if (self.textHeight != height) {
@@ -148,8 +143,6 @@
         self.textHeight = height;
         [self layoutIfNeeded];
     }
-    // 粘贴情况
-    // 全选删除情况
 }
 
 @end
